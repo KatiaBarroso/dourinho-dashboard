@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+/*
+  Tokens de cor do dashboard, medidos das imagens de referência.
+  Uso nas classes: bg-primary, text-primary-foreground, bg-sidebar-active, bg-background, etc.
+*/
+@theme {
+  --color-primary: #0253a0;
+  --color-primary-hover: #024685;
+  --color-primary-soft: #e1edf9;
+  --color-primary-foreground: #ffffff;
+
+  --color-sidebar: #0253a0;
+  --color-sidebar-item: #0558a8;
+  --color-sidebar-item-hover: #0b63b8;
+  --color-sidebar-active: #1780e2;
+  --color-sidebar-foreground: #c8e1f8;
+
+  --color-accent: #15803d;
+  --color-accent-soft: #dcfce7;
+
+  --color-danger: #dc2626;
+  --color-danger-soft: #fee2e2;
+
+  --color-background: #d9d9d9;
+  --color-surface: #ffffff;
+  --color-foreground: #1f2937;
+  --color-muted: #6b7280;
+  --color-line: #e5e7eb;
+
+  --font-sans: var(--font-inter);
+
+  --animate-shake: shake 0.45s ease-in-out;
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-8px); }
+    40%, 80% { transform: translateX(8px); }
+  }
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+}
