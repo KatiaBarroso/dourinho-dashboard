@@ -8,6 +8,7 @@ create extension if not exists "pgcrypto";
 
 -- Remove o esquema anterior (versão inicial do projeto) e o atual, se existirem.
 drop table if exists public.game_sessions cascade;
+drop table if exists public.questionserros cascade;
 drop table if exists public.collaborators cascade;
 drop table if exists public.answers cascade;
 drop table if exists public.questions cascade;
@@ -77,11 +78,26 @@ create table public.answers (
 );
 create index answers_id_question_idx on public.answers ("idQuestion");
 
+-- Erros dos alunos: uma linha por resposta errada no game (alimenta as estatísticas)
+create table public.questionserros (
+  id            uuid primary key default gen_random_uuid(),
+  stage         integer not null references public.stage (id),
+  "idQuestion"  uuid not null references public.questions (id) on delete cascade,
+  escola        text not null,
+  "idUser"      uuid not null references public.alunos (id) on delete cascade,
+  "createdAt"   timestamptz not null default now(),
+  "updatedAt"   timestamptz not null default now()
+);
+create index questionserros_created_at_idx  on public.questionserros ("createdAt");
+create index questionserros_id_user_idx     on public.questionserros ("idUser");
+create index questionserros_id_question_idx on public.questionserros ("idQuestion");
+
 create trigger alunos_updated_at        before update on public.alunos        for each row execute function public.set_updated_at();
 create trigger colaboradores_updated_at before update on public.colaboradores for each row execute function public.set_updated_at();
 create trigger stage_updated_at         before update on public.stage         for each row execute function public.set_updated_at();
 create trigger questions_updated_at     before update on public.questions     for each row execute function public.set_updated_at();
 create trigger answers_updated_at       before update on public.answers       for each row execute function public.set_updated_at();
+create trigger questionserros_updated_at before update on public.questionserros for each row execute function public.set_updated_at();
 
 -- Estágios fixos do game
 insert into public.stage (id, stagename) values
@@ -97,3 +113,4 @@ alter table public.colaboradores enable row level security;
 alter table public.stage         enable row level security;
 alter table public.questions     enable row level security;
 alter table public.answers       enable row level security;
+alter table public.questionserros enable row level security;

@@ -20,6 +20,7 @@ Também expõe as APIs que o game consome.
    npm run seed:admin   # cria o primeiro colaborador
    npm run dev
    ```
+   Em um banco que já existe, use `npm run db:migrate` no lugar do `db:setup`: ele aplica as migrações de `supabase/migrations` **sem apagar dados**.
 
 > **Supabase free:** o projeto é pausado depois de 7 dias sem atividade. Uma requisição não consegue reativá-lo; isso só se faz pelo painel.
 > A tela "Acordando o servidor" (rota `awakeserver`) cobre a latência da primeira conexão.
@@ -35,6 +36,7 @@ O esquema está em [supabase/schema.sql](supabase/schema.sql):
 | `stage` | id (0 a 4), stagename, createdAt, updatedAt |
 | `questions` | id, question, idStage, createdAt, updatedAt |
 | `answers` | id, answer, isCorrect, idQuestion, createdAt, updatedAt |
+| `questionserros` | id, stage, idQuestion, escola, idUser (aluno), createdAt, updatedAt |
 
 Regras:
 - Não há limite de questões por estágio; o game sorteia **5 de cada estágio** a cada partida.
@@ -62,7 +64,9 @@ Rotas privadas exigem o cookie de sessão criado por `signe`. Qualquer colaborad
 | `deleteanswer` | DELETE | privada | `?id=` |
 | `registerplay` | POST | pública | `{ name, turma, escola, conclude? }`, retorna `{ id }` |
 | `registerplay` | PUT | pública | `{ id, conclude }`, marca que o aluno concluiu |
-| `reports` | GET | privada | `?escola=&turma=&from=AAAA-MM-DD&to=AAAA-MM-DD` |
+| `registererror` | POST | pública | `{ idUser, idQuestion }`, registra uma resposta errada (estágio e escola são preenchidos pelo servidor) |
+| `reports` | GET | privada | `?escola=&turma=&from=AAAA-MM-DD&to=AAAA-MM-DD`, inclui erros por grupo e a lista de alunos |
+| `statistics` | GET | privada | `?from=AAAA-MM-DD&to=AAAA-MM-DD`, ranking de erros por estágio, questão e escola |
 | `collaborators` | GET | privada | — |
 | `createcollaborator` | POST | privada | `{ name, email, position, password }` |
 | `updatecollaborator` | PUT | privada | `{ id, name?, email?, position?, password? }` |

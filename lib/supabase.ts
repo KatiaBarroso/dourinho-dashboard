@@ -18,3 +18,18 @@ export function getSupabase(): SupabaseClient {
   });
   return client;
 }
+
+const PAGE_SIZE = 1000; // limite padrão de linhas por consulta no Supabase
+
+/** Busca todas as linhas de uma consulta, página por página. `page` recebe o intervalo [from, to]. */
+export async function fetchAllRows<T>(
+  page: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { code?: string; message: string } | null }>,
+): Promise<{ data: T[] } | { error: { code?: string; message: string } }> {
+  const rows: T[] = [];
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    const { data, error } = await page(offset, offset + PAGE_SIZE - 1);
+    if (error) return { error };
+    rows.push(...(data ?? []));
+    if (!data || data.length < PAGE_SIZE) return { data: rows };
+  }
+}

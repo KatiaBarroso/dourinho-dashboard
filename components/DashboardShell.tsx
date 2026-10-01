@@ -3,11 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { GraduationCap, KeyRound, ListChecks, LogOut, Menu, Users, X } from "lucide-react";
+import { ChartColumn, GraduationCap, KeyRound, ListChecks, LogOut, Menu, Users, X } from "lucide-react";
 import { api } from "@/lib/api";
 
 const NAV = [
   { href: "/dashboard/alunos", label: "Alunos", icon: GraduationCap },
+  { href: "/dashboard/estatisticas", label: "Estatísticas", icon: ChartColumn },
   { href: "/dashboard/perguntas", label: "Perguntas", icon: ListChecks },
   { href: "/dashboard/colaboradores", label: "Colaboradores", icon: Users },
 ];

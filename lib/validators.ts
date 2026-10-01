@@ -87,6 +87,12 @@ export const concludePlaySchema = z.object({
   conclude: z.boolean(),
 });
 
+// Estágio e escola são preenchidos pelo servidor a partir da questão e do aluno.
+export const registerErrorSchema = z.object({
+  idUser: uuid("idUser"),
+  idQuestion: uuid("idQuestion"),
+});
+
 // ---- Colaboradores ----
 
 export const createColaboradorSchema = z.object({
