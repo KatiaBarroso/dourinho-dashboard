@@ -32,6 +32,7 @@ export const config = {
     "/api/updatedanswer",
     "/api/deleteanswer",
     "/api/reports",
+    "/api/statistics",
     "/api/collaborators",
     "/api/createcollaborator",
     "/api/updatecollaborator",

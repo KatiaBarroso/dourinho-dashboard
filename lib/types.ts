@@ -40,10 +40,29 @@ export type ReportGroup = {
   turma: string;
   alunos: number;
   concluiram: number;
+  erros: number;
 };
 
 export type ReportData = {
-  totals: { alunos: number; concluiram: number; escolas: number; turmas: number };
+  totals: { alunos: number; concluiram: number; escolas: number; turmas: number; erros: number };
   groups: ReportGroup[];
+  alunos: ReportAluno[];
   filters: { escolas: string[]; turmas: string[] };
+};
+
+export type ReportAluno = {
+  id: string;
+  name: string;
+  escola: string;
+  turma: string;
+  conclude: boolean;
+  createdAt: string;
+  erros: number;
+};
+
+export type StatsData = {
+  totals: { erros: number; alunos: number };
+  stages: { id: number; stagename: string; erros: number }[];
+  questions: { id: string; question: string; stagename: string; erros: number }[];
+  escolas: { escola: string; erros: number }[];
 };

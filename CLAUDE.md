@@ -16,6 +16,7 @@ npm run build        # build de produção
 npm run lint         # eslint (flat config, eslint-config-next)
 npm run typecheck    # tsc --noEmit
 npm run db:setup     # executa supabase/schema.sql via pg: APAGA e recria todas as tabelas e cadastra os 5 estágios
+npm run db:migrate   # aplica supabase/migrations/*.sql em ordem, SEM apagar dados (migrações idempotentes)
 npm run seed:admin   # cria o primeiro colaborador a partir das variáveis SEED_ADMIN_*
 ```
 
@@ -25,7 +26,7 @@ As variáveis de ambiente ficam em `.env.local` (modelo: `.env.example`). Os scr
 
 ## Arquitetura
 
-**Acesso a dados:** não há Supabase Auth nem acesso pelo client com RLS. Toda chamada ao banco roda no servidor, com o client service-role de `getSupabase()` em `lib/supabase.ts`. Módulos exclusivos do servidor importam `"server-only"`. As colunas do Postgres são camelCase (`idStage`, `isCorrect`, `createdAt`), por isso precisam de aspas duplas nas strings de `select` do Supabase, por exemplo `'id, "idStage", answers(id, "isCorrect")'`. O esquema está em `supabase/schema.sql`.
+**Acesso a dados:** não há Supabase Auth nem acesso pelo client com RLS. Toda chamada ao banco roda no servidor, com o client service-role de `getSupabase()` em `lib/supabase.ts`. Módulos exclusivos do servidor importam `"server-only"`. As colunas do Postgres são camelCase (`idStage`, `isCorrect`, `createdAt`), por isso precisam de aspas duplas nas strings de `select` do Supabase, por exemplo `'id, "idStage", answers(id, "isCorrect")'`. O esquema está em `supabase/schema.sql`. Toda mudança de esquema entra **nos dois lugares**: no `schema.sql` (banco novo) e numa nova migração idempotente em `supabase/migrations/` (banco existente, aplicada com `db:migrate`). Para consultas que podem passar de 1000 linhas, use `fetchAllRows()` de `lib/supabase.ts`.
 
 **Autenticação:** a sessão é um JWT próprio (HS256, 8h) guardado no cookie `quiz_session` e assinado em `lib/session.ts`. Esse arquivo é compatível com edge porque o `proxy.ts` também o usa.
 - `POST /api/signe` faz o login e `POST /api/unsigned` faz o logout. Qualquer colaborador logado tem acesso total; não há papéis.
@@ -34,7 +35,7 @@ As variáveis de ambiente ficam em `.env.local` (modelo: `.env.example`). Os scr
 
 **Rotas da API:** cada rota tem sua própria pasta em `app/api/<nome>/route.ts`. Os nomes são verbos, sem hierarquia (`createquestion`, `updatedanswer`, `deletecollaborator`), e não seguem recursos REST. Exclusões usam `DELETE ?id=<uuid>`. O padrão de um handler é: `requireSession()`, depois `parseBody(request, zodSchema)` de `lib/http.ts`, depois a chamada ao Supabase e, se houver falha, `dbError(error)`, que converte 23505 em 409 e 23503 em 404. Os erros sempre voltam como `{ error: string }`. Os schemas zod e suas mensagens em pt-BR ficam em `lib/validators.ts`. Não há transações entre tabelas pelo Supabase, então handlers que gravam em mais de uma tabela desfazem as gravações manualmente (veja `createquestion`). A tabela completa de rotas está no `README.md`.
 
-**APIs públicas do game:** o game usa `stages`, `questions`, `questionsgame` e `registerplay`, por isso o formato das respostas dessas rotas é um contrato. `questionsgame` devolve os estágios de 0 a 4 em ordem, sorteia `GAME_QUESTIONS_PER_STAGE` (5) questões de cada estágio e embaralha as respostas.
+**APIs públicas do game:** o game usa `stages`, `questions`, `questionsgame`, `registerplay` e `registererror` (uma linha em `questionserros` por resposta errada), por isso o formato das respostas dessas rotas é um contrato. `questionsgame` devolve os estágios de 0 a 4 em ordem, sorteia `GAME_QUESTIONS_PER_STAGE` (5) questões de cada estágio e embaralha as respostas.
 
 **Regras de domínio** (constantes em `lib/types.ts`, aplicadas nos validators):
 - Há exatamente 5 estágios, com ids de 0 a 4.
@@ -45,6 +46,7 @@ As variáveis de ambiente ficam em `.env.local` (modelo: `.env.example`). Os scr
 - Busca de dados: as páginas carregam dados com o hook `useApiData(url)`, que retorna `{ data, error, loading, reload }`, e fazem as mutações com `api()` de `lib/api.ts`. `api()` lança `ApiError` e redireciona para `/login` quando recebe 401.
 - Formulários: validam no client com os mesmos schemas zod, e `fieldErrors()` em `lib/formErrors.ts` transforma os erros em chaves como `answers.2.answer`.
 - Componentes compartilhados: os blocos de interface (Button, Modal, ConfirmDialog, Alert, Spinner, PageTitle…) estão em `components/ui.tsx`.
+- Exportação: os botões PDF/Excel (`components/ExportButtons.tsx`) recebem uma função que monta um `ExportDocument` (`lib/export.ts`) com os dados e filtros atuais. jsPDF/jspdf-autotable e ExcelJS são carregados por `import()` dinâmico só no clique.
 - `AwakeGate`: o layout raiz envolve toda a aplicação no `AwakeGate`. Ele chama `/api/awakeserver` repetidamente até o Supabase responder (o plano gratuito demora na primeira conexão) e depois guarda esse resultado no `sessionStorage`.
 
 **Estilo:** os tokens de cor estão no `@theme` de `app/globals.css` (`primary`, `sidebar`, `sidebar-active`, `sidebar-item`, `background`). Use esses tokens em vez de valores hexadecimais soltos.
